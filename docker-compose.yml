@@ -1,0 +1,42 @@
+version: '3.7'
+services:
+  backend:
+    build: ./backend/
+    tty: true
+    volumes:
+      - /usr/local/lib/node_modules/
+      - /usr/local/lib/node_modules/@nestjs/
+      - './backend/:/usr/src/app/'
+      - /usr/src/app/node_modules
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    networks:
+      - socket-network
+    depends_on:
+      - redis
+      - mongo
+    environment:
+      - mongoUrl=mongodb://mongo:27017/chat
+      - redisUrl=redis://redis:6379
+      - redisHost=redis
+      - redisPort=6379
+  redis:
+    image: 'redis:5'
+    networks:
+      - socket-network
+    ports:
+      - '6379:6379'
+    command: ["redis-server", "--bind", "redis", "--port", "6379"]
+  mongo:
+    image: mongo
+    networks:
+      - socket-network
+    ports:
+      - '27017:27017'
+networks:
+  socket-network:
+    driver: bridge
+volumes:
+  red_data: {}
