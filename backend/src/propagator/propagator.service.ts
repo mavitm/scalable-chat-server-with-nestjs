@@ -37,6 +37,10 @@ export class PropagatorService {
     return this;
   }
 
+  /**
+   * Distributing messages from redis to client
+   * @param eventInfo
+   */
   private consumeSendEvent = (eventInfo: RedisSocketEventSendDTO): void => {
     const { userId, socketId } = eventInfo;
     let targetUser = userId;
@@ -57,6 +61,10 @@ export class PropagatorService {
     this.socketServer.emit(eventInfo.method, eventInfo.result);
   };
 
+  /**
+   * broadcasts gateway messages with redis publisher
+   * @param eventInfo
+   */
   propagateEvent(eventInfo: RedisSocketEventSendDTO): boolean {
     this.redisService.publish(REDIS_SOCKET_EVENT_SEND_NAME, eventInfo);
     return true;

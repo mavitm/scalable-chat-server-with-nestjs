@@ -9,9 +9,4 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
-
-  @Post('login')
-  async login() {
-    return { l: '1' };
-  }
 }
