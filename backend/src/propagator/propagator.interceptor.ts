@@ -10,6 +10,9 @@ import { tap } from 'rxjs/operators';
 import { PropagatorService } from './propagator.service';
 import { StateService } from '../state/state.service';
 
+/**
+ * for publishing messages sent to users with redis
+ */
 @Injectable()
 export class PropagatorInterceptor<T>
   implements NestInterceptor<T, WsResponse<T>>

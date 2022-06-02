@@ -11,6 +11,11 @@ export class StateService {
    */
   socketState = new Map<string, Socket[]>();
 
+  /**
+   * Add user and socket data for logged in user
+   * @param userId
+   * @param socket
+   */
   public add(userId: string, socket: Socket): boolean {
     if (this.socketState.has(userId)) {
       if (this.hasUserSocket(userId, socket)) {
@@ -25,6 +30,11 @@ export class StateService {
     return true;
   }
 
+  /**
+   * Deleting user data in case of socket shutdown
+   * @param userId
+   * @param socket
+   */
   public remove(userId: string, socket: Socket): boolean {
     const existingSockets = this.socketState.get(userId);
 
@@ -44,10 +54,18 @@ export class StateService {
     return true;
   }
 
+  /**
+   * sockets matching the user id value in the database
+   * @param userId
+   */
   public get(userId: string): Socket[] {
     return this.socketState.get(userId) || [];
   }
 
+  /**
+   * all sockets of the matching user in a connection
+   * @param socketId
+   */
   public getUserClientsBySocketId(socketId: string): Socket[] {
     const userId = this.socketUser.get(socketId);
     return this.get(userId);
@@ -57,10 +75,19 @@ export class StateService {
     return this.getUserClientsBySocketId(socket.id);
   }
 
+  /**
+   * user id value linked to client id
+   * @param clientId
+   */
   public getUserIdByClienId(clientId: string): string {
     return this.socketUser.get(clientId);
   }
 
+  /**
+   *
+   * @param userId
+   * @param socket
+   */
   public hasUserSocket(userId: string, socket: Socket): boolean {
     const sockets = this.get(userId).filter((s) => s.id === socket.id);
     return sockets.length > 0;

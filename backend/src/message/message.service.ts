@@ -26,6 +26,11 @@ export class MessageService extends ResourceService<
     super(messageModel);
   }
 
+  /**
+   * saves message to database
+   * @param messageData
+   * @param user
+   */
   // @ts-ignore
   async create(
     messageData: ClientMessageParamsDto,
@@ -40,10 +45,19 @@ export class MessageService extends ResourceService<
     return await createMessage.save();
   }
 
+  /**
+   * message filter to be sent to users
+   * @param content
+   */
   formatContent(content: string): string {
     return content;
   }
 
+  /**
+   * messages of the user and her friends
+   * @param userInfo
+   * @param params
+   */
   async getUserMessages(
     userInfo: { name; _id; email },
     params: ClientGlobalParamsDto,
@@ -57,10 +71,15 @@ export class MessageService extends ResourceService<
     return messages;
   }
 
+  /**
+   * the user sends messages to friends
+   * @param message
+   * @param socketId
+   */
   async distributeMessageToFriends(message: MessageModel, socketId: string) {
-    const otherUer = await this.userService.getFriends(message.user_id);
+    const friends = await this.userService.getFriends(message.user_id);
 
-    otherUer.forEach((user) => {
+    friends.forEach((user) => {
       this.propagatorService.propagateEvent({
         method: 'message',
         socketId,

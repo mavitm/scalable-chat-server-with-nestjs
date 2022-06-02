@@ -29,7 +29,7 @@ export class UserService extends ResourceService<
   }
 
   /**
-   *
+   * saves user to database
    * @param userParam
    */
   async create(userParam: ClientRegisterParamDto): Promise<UserModel> {
@@ -84,39 +84,40 @@ export class UserService extends ResourceService<
   /**
    *
    * @param selectedUser
-   * @param targetUser
+   * @param payload
    */
   async setFriends(
     selectedUser: { name; _id; email },
-    targetUser: ClientGlobalDto,
+    payload: ClientGlobalDto,
   ): Promise<ServerMessageDto> {
-    const leftUser = await this.findById(selectedUser._id);
-    const rightUser = await this.findById(targetUser.params.id);
-    if (leftUser && rightUser) {
-      const allFriendsLeftUser = leftUser.friends.toString().split(',');
-      const allFriendsRightUser = rightUser.friends.toString().split(',');
+    const currentUser = await this.findById(selectedUser._id);
+    const targetUser = await this.findById(payload.params.id);
 
-      if (!allFriendsLeftUser.includes(rightUser._id.toString())) {
-        leftUser.friends.push(rightUser);
+    if (currentUser && targetUser) {
+      const allFriendsCurrentUser = currentUser.friends.toString().split(',');
+      const allFriendsTargetUser = targetUser.friends.toString().split(',');
+
+      if (!allFriendsCurrentUser.includes(targetUser._id.toString())) {
+        currentUser.friends.push(targetUser);
       }
 
       await this.userModel
-        .findByIdAndUpdate(leftUser._id, leftUser, {
+        .findByIdAndUpdate(currentUser._id, currentUser, {
           new: true,
         })
         .exec();
 
-      if (!allFriendsRightUser.includes(leftUser._id.toString())) {
-        rightUser.friends.push(leftUser);
+      if (!allFriendsTargetUser.includes(currentUser._id.toString())) {
+        targetUser.friends.push(currentUser);
       }
 
       await this.userModel
-        .findByIdAndUpdate(rightUser._id, rightUser, { new: true })
+        .findByIdAndUpdate(targetUser._id, targetUser, { new: true })
         .exec();
 
       return {
-        method: targetUser.method,
-        id: targetUser.id,
+        method: payload.method,
+        id: payload.id,
         result: {
           code: 200,
           message: 'transaction successful',
@@ -128,7 +129,7 @@ export class UserService extends ResourceService<
   }
 
   /**
-   *
+   * user's friends
    * @param userId
    */
   async getFriends(userId: string): Promise<UserModel[]> {
@@ -139,30 +140,32 @@ export class UserService extends ResourceService<
     return friends;
   }
 
+  /**
+   * sends notifications to users friends, for login and logout process
+   * @param loginUser
+   * @param notifyType
+   */
   async sendNotification(loginUser: UserModel | string, notifyType: string) {
-    let otherUer: UserModel[];
-    let leftUser: UserModel;
+    let currentUser: UserModel;
     try {
       if (typeof loginUser === 'string') {
-        otherUer = await this.getFriends(loginUser);
-        leftUser = await this.findById(loginUser);
+        currentUser = await this.findById(loginUser);
       } else {
-        otherUer = await this.getFriends(loginUser._id);
-        leftUser = await this.findById(loginUser._id);
+        currentUser = loginUser;
       }
 
-      otherUer.forEach((user) => {
+      currentUser.friends.forEach((userId) => {
         this.propagetorService.propagateEvent({
           method: 'notify',
           socketId: 'target', //fake
           id: '_notify', //fake
-          userId: user._id.toString(),
+          userId: userId.toString(),
           data: {
             method: 'notify',
             id: '_notify',
             result: {
               type: notifyType,
-              user: leftUser.name,
+              user: currentUser.name,
             },
           },
         });
