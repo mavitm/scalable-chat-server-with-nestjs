@@ -186,10 +186,21 @@ export class EventsGateway
     this.logger.log('Socket server init');
   }
 
+  /**
+   *
+   * @param client
+   */
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
+
+    //If the user does not log in after the connection, the connection will be broken.
+    setTimeout(this.checkUserIsLoggedIn.bind(this), 15000, client);
   }
 
+  /**
+   *
+   * @param client
+   */
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
 
@@ -207,11 +218,32 @@ export class EventsGateway
     );
   }
 
+  /**
+   *
+   * @param sendData
+   * @private
+   */
   private returnData(sendData): Observable<WsResponse<any>> {
     return from([sendData]).pipe(
       map((data) => {
         return { event: sendData.method, data };
       }),
     );
+  }
+
+  /**
+   * disconnect if client is not a valid user
+   * @param client
+   * @private
+   */
+  private checkUserIsLoggedIn(client: Socket) {
+    const userId: string = this.eventStateService.getUserIdByClienId(client.id);
+    if (typeof userId === 'undefined') {
+      console.log(
+        'Connection closed because login request was not sent',
+        client.request.connection.remoteAddress,
+      );
+      client.disconnect(true);
+    }
   }
 }
